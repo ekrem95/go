@@ -5,15 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
-
-// Person type
-type Person struct {
-	Name string
-	Age  int
-}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -33,14 +28,30 @@ func main() {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			panic(err)
-			return
 		}
 		fmt.Println("Clien subscribed")
 
-		myPerson := Person{Name: "Bill", Age: 0}
+		for {
+			msgType, msg, err := conn.ReadMessage()
+			if err != nil {
+				panic(err)
+			}
+			if string(msg) == "ping" {
+				fmt.Println("ping")
+				time.Sleep(2 * time.Second)
+				err = conn.WriteMessage(msgType, []byte("pong"))
+				if err != nil {
+					panic(err)
+				}
+			} else {
+				conn.Close()
+				fmt.Println(string(msg))
+				return
+			}
+		}
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, string(index))
 	})
-	http.ListenAndServe(":4000", nil)
+	http.ListenAndServe(":3000", nil)
 }
