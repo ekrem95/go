@@ -1,2 +1,4 @@
 runner-build*
 tmp/
+node_modules/
+.env
