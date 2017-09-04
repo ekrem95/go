@@ -9,9 +9,6 @@ Vue.config.productionTip = false;
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
-  data: {
-    server: 'http://localhost:1323/',
-  },
   router,
   template: '<App/>',
   components: { App },

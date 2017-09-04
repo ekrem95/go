@@ -21,8 +21,9 @@
 </template>
 
 <script>
+import {server} from '../res';
 export default {
-  name: 'hello',
+  name: 'home',
   data () {
     return {
       msg: 'Welcome to Your Vue.js App',

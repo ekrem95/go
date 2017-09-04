@@ -1,12 +1,10 @@
 <template>
   <div class="app">
-    <h1>Sign up</h1>
+    <h1>Login</h1>
     <div class="form">
-      <input type="text" id="name" placeholder="Name" autofocus=""/>
       <input type="text" id="email" placeholder="Email"/>
       <input type="password" id="password" placeholder="Password"/>
-      <input type="password" id="password2" placeholder="Repeat Password"/>
-      <button type="button" v-on:click="signup">Sign up</button>
+      <button type="button" v-on:click="login">Login</button>
     </div>
     <h5>{{ error }}</h5>
   </div>
@@ -15,28 +13,27 @@
 <script>
 import { server, post, validateEmail } from '../res'
 export default {
-  name: 'signup',
+  name: 'login',
   data () {
     return {
       error: null,
     }
   },
   methods: {
-    signup: function () {
-      const name = document.getElementById('name').value;
+    login: function () {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const password2 = document.getElementById('password2').value;
 
-      if( validateEmail(email) && name.length > 2 && password.length > 5 && password === password2 ) {
+      if( validateEmail(email) && password.length > 5 ) {
         this.error = null;
 
         post(
-          server + 'signup',
-          ['name', 'email', 'password'],
-          [name, email, password],
+          server + 'login',
+          ['email', 'password'],
+          [email, password],
         )
         .then(res => {
+          console.log(res);
           if(res.done) {
             this.$router.push('/');
           } else {
