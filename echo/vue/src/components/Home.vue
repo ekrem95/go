@@ -28,7 +28,25 @@ export default {
     return {
       msg: 'Welcome to Your Vue.js App',
     }
-  }
+  },
+  beforeMount(){
+    const token = localStorage.getItem('token');
+    const config = {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    }
+
+    fetch(server + 'restricted', config)
+    .then(res => res.json())
+    .then(res => {
+      console.log(res);
+      if(res.message === 'Invalid or expired jwt') {
+        console.log("Logged out");
+      }
+    })
+    .catch(e => console.log(e))
+ },
 }
 </script>
 

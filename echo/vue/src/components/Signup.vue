@@ -37,8 +37,9 @@ export default {
           [name, email, password],
         )
         .then(res => {
-          if(res.done) {
-            this.$router.push('/');
+          if(res.token) {
+            localStorage.setItem('token', res.token);
+            // this.$router.push('/');
           } else {
             this.error = res.msg
           }

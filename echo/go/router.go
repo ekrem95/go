@@ -2,7 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"net/http"
+	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -66,7 +69,40 @@ func login(c echo.Context) error {
 
 	setSessionUser(c, dbUsername)
 
+	t := jwtAuth(dbUsername)
+
 	return c.JSON(200, map[string]string{
-		"name": dbUsername,
+		"name":  dbUsername,
+		"token": t,
 	})
+}
+
+func accessible(c echo.Context) error {
+	return c.String(http.StatusOK, "Accessible")
+}
+
+func restricted(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	return c.JSON(200, map[string]string{
+		"user": name,
+	})
+}
+
+func jwtAuth(username string) string {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	// Set claims
+	claims := token.Claims.(jwt.MapClaims)
+	claims["name"] = username
+	// claims["admin"] = true
+	// claims["exp"] = time.Now().Add(time.Minute * 1).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

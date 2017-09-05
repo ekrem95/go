@@ -34,8 +34,8 @@ export default {
         )
         .then(res => {
           console.log(res);
-          if(res.done) {
-            this.$router.push('/');
+          if(res.token) {
+            localStorage.setItem('token', res.token);
           } else {
             this.error = res.msg
           }

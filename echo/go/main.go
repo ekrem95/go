@@ -23,5 +23,11 @@ func main() {
 	e.POST("/signup", signup)
 	e.POST("/login", login)
 
+	e.GET("/", accessible)
+
+	r := e.Group("/restricted")
+	r.Use(middleware.JWT([]byte("secret")))
+	r.GET("", restricted)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
