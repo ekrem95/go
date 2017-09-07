@@ -40,7 +40,9 @@ let history = {};
 
 io.on('connection', socket => {
   console.log('Connected');
+
   let user;
+
   socket.on('new_stream', username => {
     console.log(username);
     user = username;
@@ -53,17 +55,19 @@ io.on('connection', socket => {
 
   socket.on('stream', data => {
     // socket.emit('dist', data);
-    socket.broadcast.emit('dist', data);
+    socket.broadcast.emit('dist' + data[1], data[0]);
   });
 
   socket.on('disconnect', () => {
 
     console.log(user + ' exited');
 
-    client.srem(['test_online_users', user], (err, reply) => {
-      if (err)return err;
-      console.log(reply);
-    });
+    if (user) {
+      client.srem(['test_online_users', user], (err, reply) => {
+        if (err) return err;
+        console.log(reply);
+      });
+    }
 
   });
 

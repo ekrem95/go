@@ -39,7 +39,12 @@ export default class Sender extends Component {
 
       function viewVideo(video, context) {
         context.drawImage(video, 0, 0, context.width, context.height);
-        socket.emit('stream', canvas.toDataURL('image/webp'));
+        socket.emit('stream',
+        [
+          canvas.toDataURL('image/webp'),
+          username,
+        ]
+      );
       }
 
       (function () {
@@ -52,7 +57,7 @@ export default class Sender extends Component {
 
         setInterval(() => {
               viewVideo(video, context);
-            }, 50);
+            }, 20);
       }());
 
       socket.emit('new_stream', username);
