@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>View</title>
+    <style>
+      body {background: #000;}
+    </style>
+    <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+  <script src="/io/socket.io.js"></script>
+  </head>
+  <body>
+    <img id="play"/>
+    <div id="logger"></div>
+    <script>
+      const socket = io();
+      socket.on('stream', image => {
+        const img = document.getElementById('play');
+        img.src = image;
+
+        $('#logger').text(image);
+      });
+    </script>
+  </body>
+</html>

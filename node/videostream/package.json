@@ -1,0 +1,11 @@
+{
+  "name": "videostream",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.4",
+    "log": "^1.4.0",
+    "socket.io": "^2.0.3"
+  }
+}
