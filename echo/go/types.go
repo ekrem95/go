@@ -2,8 +2,8 @@ package main
 
 // User type
 type User struct {
-	ID       int `json:"id"`
-	Name     int `json:"name"`
-	Email    int `json:"email"`
-	Password int `json:"password"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
