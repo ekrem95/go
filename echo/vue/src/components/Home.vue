@@ -2,7 +2,7 @@
   <div class="hello">
     <h1>{{ msg }}</h1>
     <div class="items">
-      <div v-for="item in items" class="item">
+      <div v-for="item in items" class="item" v-on:click="route(item)">
         <h4>{{item.title}}</h4>
         <img v-bind:src="item.src"/>
       </div>
@@ -18,6 +18,11 @@ export default {
     return {
       msg: 'Welcome to Your Vue.js App',
       items: [],
+    }
+  },
+  methods: {
+    route: function(item) {
+      this.$router.push({ path: '/p/' + item._id, query: { data: item }})
     }
   },
   beforeMount(){
