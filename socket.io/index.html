@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>IO</title>
+  </head>
+  <body>
+    <span id="button">Click</span>
+    <script
+     src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js">
+    </script>
+
+    <script>
+      const button = document.getElementById('button');
+      var socket = io();
+      socket.on('connect', function () {
+        socket.emit('time', new Date, function (data) {
+          console.log(data);
+        });
+
+        button.onclick = () => {
+          socket.emit('click', 'data');
+        };
+      });
+    </script>
+  </body>
+</html>
