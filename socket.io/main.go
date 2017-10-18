@@ -17,8 +17,8 @@ func main() {
 		log.Println("on connection")
 		so.Join("chat")
 		so.On("chat message", func(msg string) {
-			log.Println("emit:", so.Emit("chat message", msg))
-			so.BroadcastTo("chat", "chat message", msg)
+			so.Emit("chat message", msg)
+			so.BroadcastTo("chat", "dist", msg)
 		})
 		so.On("disconnection", func() {
 			log.Println("on disconnect")
@@ -27,8 +27,10 @@ func main() {
 		so.On("time", func(time string) string {
 			log.Println(time)
 
-			// return time[0:10]
 			return strings.Replace(time[0:10], "-", " ", -1)
+		})
+		so.On("click", func(time string) {
+			log.Println(time)
 		})
 	})
 

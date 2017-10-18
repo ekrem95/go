@@ -18,6 +18,16 @@
           console.log(data);
         });
 
+        socket.emit('chat message', 'message');
+
+        socket.on('chat message', (msg) => {
+          console.log(msg);
+        });
+
+        socket.on('dist', (msg) => {
+          console.log(msg);
+        });
+
         button.onclick = () => {
           socket.emit('click', 'data');
         };
