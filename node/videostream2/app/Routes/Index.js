@@ -8,16 +8,15 @@ export default class Index extends Component {
     this.navigate = this.navigate.bind(this);
   }
 
+
   componentWillMount() {
     fetch('/streams')
-    .then(res => res.json())
-    .then(res => {
-      if (res.length < 1) {
-        this.setState({ streams: null });
-      } else {
-        this.setState({ streams: res });
-      }
-    });
+      .then(res => res.json())
+      .then(res => {
+        if (res.length) {
+          this.setState({ streams: res });
+        }
+      });
   }
 
   navigate(name) {
@@ -39,28 +38,25 @@ export default class Index extends Component {
             }
           }}
 
-          type="text" id="name"/>
+          type="text" id="name" />
         <button
           onClick={() => {
             const name = document.getElementById('name').value;
             this.navigate(name);
           }}
-          >Start</button>
-          <br />
-          <br />
-          {this.state.streams &&
-            this.state.streams.map(s => {
-              console.log(s);
-              return (
-                <div
-                  key={s}
-                  onClick={() => {
-                    this.props.history.push('/r/' + s);
-                  }}
-                  >{s}</div>
-              );
-            })
-          }
+        >Start</button>
+        <br />
+        <br />
+        {this.state.streams &&
+          this.state.streams.map(s =>
+            <div
+              key={s}
+              onClick={() => {
+                this.props.history.push('/r/' + s);
+              }}
+            >{s}</div>
+          )
+        }
       </div>
     );
   }

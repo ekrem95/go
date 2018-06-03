@@ -29,7 +29,7 @@ export default class Sender extends Component {
 
     if (socket !== undefined) {
       function loadCam(stream) {
-        video.src = window.URL.createObjectURL(stream);
+        video.srcObject = stream;
         console.log('Camera connected.');
       }
 
@@ -40,11 +40,11 @@ export default class Sender extends Component {
       function viewVideo(video, context) {
         context.drawImage(video, 0, 0, context.width, context.height);
         socket.emit('stream',
-        [
-          canvas.toDataURL('image/webp'),
-          username,
-        ]
-      );
+          [
+            canvas.toDataURL('image/webp'),
+            username,
+          ]
+        );
       }
 
       (function () {
@@ -56,8 +56,8 @@ export default class Sender extends Component {
         }
 
         setInterval(() => {
-              viewVideo(video, context);
-            }, 20);
+          viewVideo(video, context);
+        }, 20);
       }());
 
       socket.emit('new_stream', username);

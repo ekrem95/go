@@ -11,12 +11,11 @@ export default class Cam extends Component {
     const username = this.props.location.pathname.split('/').pop();
     this.setState({ username });
 
-    let socket = io.connect('/');
+    const socket = io.connect('/');
 
     if (socket !== undefined) {
       socket.on('dist' + username, data => {
-        const img = document.getElementById('play');
-        img.src = data;
+        document.getElementById('play').src = data;
       });
     }
   }
@@ -25,7 +24,7 @@ export default class Cam extends Component {
     return (
       <div>
         <h2>{this.state.username}'s room</h2>
-        <img id="play"/>
+        <img id="play" />
       </div>
     );
   }
