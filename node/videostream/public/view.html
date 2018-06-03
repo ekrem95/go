@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>View</title>
+  <style>
+    body {
+      background: #000;
+    }
+  </style>
+  <script src="/io/socket.io.js"></script>
+</head>
+
+<body>
+  <img id="play" />
+  <script>
+    const socket = io();
+    const img = document.getElementById('play');
+    socket.on('stream', image => img.src = image);
+  </script>
+</body>
+
+</html>

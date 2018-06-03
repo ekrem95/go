@@ -1,65 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Cam</title>
-    <style>
-      body {background: #000;}
-    </style>
-    <script
-  src="https://code.jquery.com/jquery-3.2.1.min.js"
-  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
+
+<head>
+  <meta charset="utf-8">
+  <title>Broadcast</title>
+  <style>
+    body {
+      background: #000;
+    }
+  </style>
   <script src="/io/socket.io.js"></script>
-  </head>
-  <body>
-    <video src="" id="video" style="width:680px;height:320px;" autoplay="true"></video>
-    <canvas id="preview" style="display:none;"></canvas>
-    <div id="logger">
+</head>
 
-    </div>
-    <script type="text/javascript">
-      let canvas = document.getElementById('preview');
-      let context = canvas.getContext('2d');
+<body>
+  <video src="" id="video" style="width:680px;height:320px;" autoplay="true"></video>
+  <canvas id="preview" style="display:none;"></canvas>
+  <div id="logger">
 
-      canvas.width = 800;
-      canvas.height = 600;
-      context.width = canvas.width;
-      context.height = canvas.height;
+  </div>
+  <script type="text/javascript">
+    let canvas = document.getElementById('preview');
+    let context = canvas.getContext('2d');
 
-      const video = document.getElementById('video');
-      const socket = io();
+    canvas.width = 800;
+    canvas.height = 600;
+    context.width = canvas.width;
+    context.height = canvas.height;
 
-      function logger(msg) {
-        $('#logger').text(msg);
+    const video = document.getElementById('video');
+    const socket = io();
+
+    const logger = (msg) => console.log(msg);
+
+    const loadCam = (stream) => video.srcObject = stream;
+
+    const loadFail = () => logger('Camera not connected.');
+
+    const viewVideo = (video, context) => {
+      context.drawImage(video, 0, 0, context.width, context.height);
+      socket.emit('stream', canvas.toDataURL('image/webp'));
+    }
+
+    (() => {
+      navigator.getUserMedia = (
+        navigator.getUserMedia || navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia || navigator.msgGetUserMedia);
+      if (navigator.getUserMedia) {
+        navigator.getUserMedia({ video: true }, loadCam, loadFail);
       }
 
-      function loadCam(stream) {
-        video.src = window.URL.createObjectURL(stream);
-        logger('Camera connected.');
-      }
+      setInterval(() => viewVideo(video, context), 50);
+    })();
+  </script>
+</body>
 
-      function loadFail() {
-        logger('Camera not connected.');
-      }
-
-      function viewVideo(video, context) {
-        context.drawImage(video, 0, 0, context.width, context.height);
-        socket.emit('stream', canvas.toDataURL('image/webp'));
-      }
-
-      $(function () {
-        navigator.getUserMedia = (
-          navigator.getUserMedia || navigator.webkitGetUserMedia ||
-          navigator.mozGetUserMedia || navigator.msgGetUserMedia);
-        if (navigator.getUserMedia) {
-          navigator.getUserMedia({ video: true }, loadCam, loadFail);
-        }
-
-        setInterval(() => {
-          viewVideo(video, context);
-        }, 50);
-      });
-    </script>
-  </body>
 </html>
