@@ -24,15 +24,15 @@ server.listen(process.env.PORT || 3000);
 // Connect
 
 client.on('error', function (err) {
-    console.log('Error ' + err);
-  });
+  console.log('Error ' + err);
+});
 
 client.on('connect', function () {
-    console.log('Connected to Redis');
-  });
+  console.log('Connected to Redis');
+});
 
 client.del(['test_online_users'], (err, reply) => {
-  if (err)return err;
+  if (err) return err;
   console.log(reply);
 });
 

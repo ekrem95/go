@@ -23,19 +23,17 @@ func main() {
 
 	defer db.Close()
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
+	if _, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
 		id SERIAL,
 		age INT,
 		first_name VARCHAR(255),
 		last_name VARCHAR(255),
 		email TEXT
-	  );`)
-	if err != nil {
+	  );`); err != nil {
 		panic(err)
 	}
-	_, err = db.Exec(`INSERT INTO users (age, email, first_name, last_name)
-	VALUES (30, 'eko@eko.io', 'Ekrem', 'Karatas'); `)
-	if err != nil {
+	if _, err = db.Exec(`INSERT INTO users (age, email, first_name, last_name)
+	VALUES (30, 'eko@eko.io', 'Ekrem', 'Karatas'); `); err != nil {
 		panic(err)
 	}
 
@@ -45,16 +43,12 @@ func main() {
 	}
 
 	for rows.Next() {
-		var id int
-		var age int
-		var first_name string
-		var last_name string
-		var email string
-		err = rows.Scan(&id, &age, &first_name, &last_name, &email)
-		if err != nil {
+		var id, age int
+		var fname, lname, email string
+		if err = rows.Scan(&id, &age, &fname, &lname, &email); err != nil {
 			fmt.Println(err)
 		}
 
-		fmt.Printf("%3v | %8v | %6v | %16v | %6v\n", id, age, first_name, last_name, email)
+		fmt.Printf("%3v | %8v | %6v | %16v | %6v\n", id, age, fname, lname, email)
 	}
 }

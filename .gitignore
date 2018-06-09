@@ -2,4 +2,5 @@ runner-build*
 tmp/
 node_modules/
 .env
+.tmp/
 bundle.js

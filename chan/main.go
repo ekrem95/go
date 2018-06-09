@@ -22,12 +22,6 @@ func main() {
 	c2 := getMessages("second", 150)
 	c3 := getMessages("third", 10)
 
-	// for i := 1; i <= 3; i++ {
-	// 	println(<-c1)
-	// 	println(<-c2)
-	// 	println(<-c3)
-	// }
-
 	for i := 1; i <= 9; i++ {
 		select {
 		case msg := <-c1:
