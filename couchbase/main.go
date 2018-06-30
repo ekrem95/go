@@ -7,13 +7,14 @@ import (
 	"github.com/couchbase/gocb"
 )
 
+// Person ...
 type Person struct {
-	ID        string `json:"id,omitempty`
 	Firstname string `json:"firstname,omitempty`
 	Lastname  string `json:"lastname,omitempty`
 	Social    []Socialmedia
 }
 
+// Socialmedia ...
 type Socialmedia struct {
 	Title string `json:"title`
 	Link  string `json:"link`
@@ -22,18 +23,17 @@ type Socialmedia struct {
 func main() {
 	cluster, err := gocb.Connect("couchbase://127.0.0.1")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	bucket, err := cluster.OpenBucket("eko", "123456")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	// fmt.Println(bucket)
 	var person Person
 
 	// first param of upsert func is ID
 	bucket.Upsert("ekrem", Person{
-		ID:        "1",
 		Firstname: "Ekrem",
 		Lastname:  "K",
 		Social: []Socialmedia{
@@ -43,7 +43,6 @@ func main() {
 	}, 0)
 
 	bucket.Upsert("eko", Person{
-		ID:        "2",
 		Firstname: "Ekrem",
 		Lastname:  "K",
 		Social: []Socialmedia{

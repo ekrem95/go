@@ -83,8 +83,6 @@ func hello(c echo.Context) error {
 
 // Client ...
 type Client interface {
-	// Get a Service from consul
-	Service(string, string) ([]string, error)
 	// Register a service with local agent
 	Register(string, int) error
 	// Deregister a service with local agent
@@ -119,17 +117,4 @@ func (c *client) Register(name string, port int) error {
 // DeRegister a service with consul local agent
 func (c *client) DeRegister(id string) error {
 	return c.consul.Agent().ServiceDeregister(id)
-}
-
-// Service return a service
-func (c *client) Service(service, tag string) ([]*consul.ServiceEntry, *consul.QueryMeta, error) {
-	passingOnly := true
-	addrs, meta, err := c.consul.Health().Service(service, tag, passingOnly, nil)
-	if len(addrs) == 0 && err == nil {
-		return nil, nil, fmt.Errorf("service ( %s ) was not found", service)
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	return addrs, meta, nil
 }
