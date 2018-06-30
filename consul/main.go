@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 
 	consul "github.com/hashicorp/consul/api"
 	"github.com/labstack/echo"
@@ -19,29 +20,49 @@ var (
 )
 
 func main() {
-	client, err := NewConsulClient(address)
+	client, err := setup()
 	if err != nil {
+		client.DeRegister(name)
 		log.Fatal(err)
 	}
 
-	err = client.Register(name, port)
-	if err != nil {
-		log.Fatal(err)
-	}
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
 
-	entry, _, err := client.Service(name, "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if len(entry) > 0 {
-		services, err := listServices()
-		if err != nil {
-			log.Println(err)
+	go func() {
+		select {
+		case sig := <-c:
+			fmt.Printf("Got %s signal. Aborting...\n", sig)
+			client.DeRegister(name)
+			os.Exit(1)
 		}
-		fmt.Println(services[name])
+	}()
+
+	e := server()
+	// Start server
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
+}
+
+func setup() (*client, error) {
+	client, err := newConsulClient(address)
+	if err != nil {
+		return nil, err
 	}
 
+	if err = client.Register(name, port); err != nil {
+		return nil, err
+	}
+
+	services, err := client.consul.Agent().Services()
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(services[name])
+
+	return client, nil
+}
+
+func server() *echo.Echo {
 	// Echo instance
 	e := echo.New()
 
@@ -52,43 +73,13 @@ func main() {
 	// Routes
 	e.GET("/", hello)
 
-	// Start server
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
-
+	return e
 }
 
 // Handler
 func hello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
 }
-
-func listServices() (Services, error) {
-	resp, err := http.Get(consulServices)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var services Services
-	json.NewDecoder(resp.Body).Decode(&services)
-
-	return services, nil
-}
-
-// Service ...
-type Service struct {
-	ID                string
-	Service           string
-	Tags              []string
-	Address           string
-	Port              int
-	EnableTagOverride bool
-	CreateIndex       int
-	ModifyIndex       int
-}
-
-// Services ...
-type Services map[string]Service
 
 // Client ...
 type Client interface {
@@ -105,7 +96,7 @@ type client struct {
 }
 
 // NewConsulClient returns a Client interface for given consul address
-func NewConsulClient(addr string) (*client, error) {
+func newConsulClient(addr string) (*client, error) {
 	config := consul.DefaultConfig()
 	config.Address = addr
 	c, err := consul.NewClient(config)
