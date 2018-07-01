@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+
+  <script type="text/javascript">
+  const WebsocketStart = () => {
+    const ws = new WebSocket('ws://localhost:8080/websocket');
+    const TextArea = document.getElementById('textarea');
+
+    ws.onopen = () => {
+      ws.send('ping');
+      TextArea.value = TextArea.value + '\n' + 'First message sent';
+    };
+
+    ws.onmessage = (evt) => {
+      TextArea.value = TextArea.value + '\n' + evt.data;
+      if (evt.data == 'pong') {
+        setTimeout(() => ws.send('ping'), 2000);
+      }
+    };
+
+    ws.onclose = () => {
+      TextArea.value = TextArea.value + '\n' + 'Connection closed';
+    };
+  }
+  </script>
+
+</head>
+<body>
+<button onclick="javascript:WebsocketStart()">Start websocket!</button>
+<textarea id="textarea" style="height: 70vh; width: 70vw">TextArea</textarea>
+</body>
+</html>

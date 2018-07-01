@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
@@ -22,8 +24,7 @@ func main() {
 
 	e.POST("/signup", signup)
 	e.POST("/login", login)
-
-	e.GET("/", accessible)
+	e.GET("/", func(c echo.Context) error { return c.String(http.StatusOK, "Hello") })
 
 	r := e.Group("/restricted")
 	r.Use(middleware.JWT([]byte("secret")))

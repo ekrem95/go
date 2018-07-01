@@ -30,11 +30,11 @@ export default {
     } else {
       const addr = this.$router.history.current.path
       const result = addr.substring(addr.lastIndexOf("/") + 1);
-      fetch('https://react-eko.herokuapp.com/api/' + result)
-      .then(res => res.json())
-      .then(res => {
-        this.item = res
-      })
+      // fetch('https://react-eko.herokuapp.com/api/' + result)
+      // .then(res => res.json())
+      // .then(res => {
+      //   this.item = res
+      // })
     }
  },
 }

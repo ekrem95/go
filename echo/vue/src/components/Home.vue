@@ -26,14 +26,14 @@ export default {
     }
   },
   beforeMount(){
-    fetch('https://react-eko.herokuapp.com/api/posts')
-      .then(res => res.json())
-      .then(res => {
-        // console.log(res)
-        this.items = res
-        console.log(this.items);
-      })
-      .catch(e => console.log(e))
+    // fetch('https://react-eko.herokuapp.com/api/posts')
+    //   .then(res => res.json())
+    //   .then(res => {
+    //     // console.log(res)
+    //     this.items = res
+    //     console.log(this.items);
+    //   })
+    //   .catch(e => console.log(e))
 
 
     // const token = localStorage.getItem('token');

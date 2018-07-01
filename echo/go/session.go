@@ -6,19 +6,19 @@ import (
 	"github.com/labstack/echo-contrib/session"
 )
 
-func setSessionUser(c echo.Context, value string) {
-	sess, _ := session.Get("session", c)
-	sess.Options = &sessions.Options{
+func setSession(c echo.Context, value string) {
+	s, _ := session.Get("session", c)
+	s.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   600,
 		HttpOnly: true,
 	}
-	sess.Values["user"] = value
-	sess.Save(c.Request(), c.Response())
+	s.Values["user"] = value
+	s.Save(c.Request(), c.Response())
 }
 
-func getSessionUser(c echo.Context) string {
-	sess, _ := session.Get("session", c)
-	username := sess.Values["user"]
+func getSession(c echo.Context) string {
+	s, _ := session.Get("session", c)
+	username := s.Values["user"]
 	return username.(string)
 }
