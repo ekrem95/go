@@ -4,11 +4,11 @@ visit http://localhost:8091
 
 Setup New Cluster
 ----------------------
-cluster name:   eko
-admin username: eko
+cluster name:   {name}
+admin username: Administrator
 password:       123456
 ----------------------
 Add Bucket
 ---------
-name: eko
+name: default
 ---------

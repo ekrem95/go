@@ -7,6 +7,10 @@ import (
 	"github.com/couchbase/gocb"
 )
 
+var (
+	name = "default"
+)
+
 // Person ...
 type Person struct {
 	Firstname string `json:"firstname,omitempty`
@@ -25,11 +29,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bucket, err := cluster.OpenBucket("eko", "123456")
+	cluster.Authenticate(gocb.PasswordAuthenticator{
+		Username: "Administrator",
+		Password: "123456",
+	})
+	bucket, err := cluster.OpenBucket(name, "")
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Println(bucket)
+	bucket.Manager("", "").CreatePrimaryIndex("", true, false)
+
 	var person Person
 
 	// first param of upsert func is ID
@@ -58,4 +67,15 @@ func main() {
 	bucket.Get("eko", &person)
 	jsonBytes, _ = json.Marshal(person)
 	fmt.Println(string(jsonBytes))
+
+	// Use query
+	query := gocb.NewN1qlQuery("SELECT * FROM " + name + " WHERE $1 IN Social")
+	rows, err := bucket.ExecuteN1qlQuery(query, []interface{}{Socialmedia{Title: "twitter", Link: "www"}})
+	if err != nil {
+		panic(err)
+	}
+	var row interface{}
+	for rows.Next(&row) {
+		fmt.Printf("Row: %v\n", row)
+	}
 }
