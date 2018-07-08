@@ -23,7 +23,7 @@ var hub = Hub{
 	clients:      make(map[*Client]bool),
 }
 
-// Client type
+// Client ...
 type Client struct {
 	ws   *websocket.Conn
 	send chan []byte
@@ -41,7 +41,6 @@ func (c *Client) write() {
 				c.ws.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-
 			c.ws.WriteMessage(websocket.TextMessage, message)
 		}
 	}
@@ -65,17 +64,13 @@ func (c *Client) read() {
 	}
 }
 
-func wsPage(res http.ResponseWriter, req *http.Request) {
+func ws(res http.ResponseWriter, req *http.Request) {
 	conn, err := upgrader.Upgrade(res, req, nil)
 	if err != nil {
-		// http.NotFound(res, req)
 		return
 	}
 
-	client := &Client{
-		ws:   conn,
-		send: make(chan []byte),
-	}
+	client := &Client{ws: conn, send: make(chan []byte)}
 
 	hub.addClient <- client
 
@@ -89,7 +84,7 @@ func (hub *Hub) start() {
 		case conn := <-hub.addClient:
 			hub.clients[conn] = true
 		case conn := <-hub.removeClient:
-			if _, ok := hub.clients[conn]; ok {
+			if _, exists := hub.clients[conn]; exists {
 				delete(hub.clients, conn)
 				close(conn.send)
 			}
@@ -106,13 +101,13 @@ func (hub *Hub) start() {
 	}
 }
 
-func homePage(res http.ResponseWriter, req *http.Request) {
+func index(res http.ResponseWriter, req *http.Request) {
 	http.ServeFile(res, req, "index.html")
 }
 
 func main() {
 	go hub.start()
-	http.HandleFunc("/ws", wsPage)
-	http.HandleFunc("/", homePage)
+	http.HandleFunc("/ws", ws)
+	http.HandleFunc("/", index)
 	http.ListenAndServe(":8080", nil)
 }

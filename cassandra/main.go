@@ -56,40 +56,42 @@ func main() {
 
 	if _, exists := keySpaceMeta.Tables["person"]; !exists {
 		session.Query("CREATE TABLE person (" +
-			"id text, name text, phone text, " +
+			"id UUID, name text, phone text, " +
 			"PRIMARY KEY (id))").Exec()
 	}
 
+	uuids := []gocql.UUID{gocql.TimeUUID(), gocql.TimeUUID()}
+
 	// Insert records into table using prepared statements
 	session.Query("INSERT INTO person (id, name, phone) VALUES (?, ?, ?)",
-		"ekrem", "Ekrem", "1234567890").Exec()
+		uuids[0], "Ekrem", "535-850-8556").Exec()
 	session.Query("INSERT INTO person (id, name, phone) VALUES (?, ?, ?)",
-		"eko", "Karatas", "1234567890").Exec()
+		uuids[1], "Karatas", "535-850-8556").Exec()
 
 	// Update a record
-	session.Query("UPDATE person SET phone = ? WHERE id = ?", "123456", "eko").Exec()
+	session.Query("UPDATE person SET phone = ? WHERE id = ?", "536-850-8556", uuids[1]).Exec()
 
 	// Select record and run some process on data fetched
+	var id gocql.UUID
 	var name, phone string
 	if err := session.Query(
-		"SELECT name, phone FROM person WHERE id='ekrem'").Scan(
-		&name, &phone); err != nil {
+		"SELECT id, name, phone FROM person WHERE id= ?", uuids[0]).Scan(
+		&id, &name, &phone); err != nil {
 		if err != gocql.ErrNotFound {
 			log.Fatalf("Query failed: %v", err)
 		}
 	}
-	log.Printf("Name: %v", name)
-	log.Printf("Phone: %v", phone)
+	fmt.Printf("%-40v %-14v %-14v\n", "id", "name", "phone")
+	fmt.Printf("%-40v %-14v %-14v\n\n", id, name, phone)
 
 	// Fetch multiple rows and run process over them
-	iter := session.Query("SELECT name, phone FROM person").Iter()
-	for iter.Scan(&name, &phone) {
-		log.Printf("Iter Name: %v", name)
-		log.Printf("Iter Phone: %v", phone)
+	iter := session.Query("SELECT id, name, phone FROM person").Iter()
+	for iter.Scan(&id, &name, &phone) {
+		fmt.Printf("%-40v %-14v %-14v\n", id, name, phone)
 	}
 
-	// Delete a record
-	if err = session.Query("DELETE FROM person WHERE id = ?", "eko").Exec(); err != nil {
+	// Delete records
+	if err = session.Query("DELETE FROM person WHERE id IN ?", uuids).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }

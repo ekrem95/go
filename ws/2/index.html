@@ -1,44 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title></title>
-    <style>
-      body {
-        background: #000;
-        color: #fff;
-      }
-    </style>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+    }
+  </style>
 </head>
+
 <body>
+  <input type="text" placeholder="message" id="textbox">
+  <button id="button">Send</button>
+  <div id="box"></div>
 
-    <input type="text" placeholder="message" id="textbox">
-    <button id="button">Send</button>
-    <div id="box"></div>
+  <script>
+    const socket = new WebSocket('ws://localhost:8080/ws');
+    const button = document.getElementById('button');
+    const textbox = document.getElementById('textbox');
+    const box = document.getElementById('box');
 
-    <script>
-    var socket = new WebSocket('ws://localhost:8080/ws');
+    button.addEventListener('click', (event) => socket.send(textbox.value));
+    socket.onopen = (event) => console.log('Socket opened successfully');
+    window.onbeforeunload = (event) => socket.close();
 
-    var button = document.getElementById('button');
-    button.addEventListener('click', function (event) {
-        var text = document.getElementById('textbox').value;
-        socket.send(text);
-      });
-
-    socket.onopen = function (event) {
-        console.log('Socket opened successfully');
-      };
-
-    socket.onmessage = function (event) {
-        var box = document.createElement('div');
-        box.innerHTML = event.data;
-        document.getElementById('box').appendChild(box);
-      };
-
-    window.onbeforeunload = function (event) {
-        socket.close();
-      };
-
-    </script>
+    socket.onmessage = (event) => {
+      var child_box = document.createElement('div');
+      child_box.innerHTML = event.data;
+      box.appendChild(child_box);
+    };
+  </script>
 </body>
+
 </html>
