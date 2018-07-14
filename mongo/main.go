@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo"
@@ -27,26 +28,32 @@ type Document struct {
 	Data  string   `json:"data" bson:"data"`
 	Tags  []string `json:"tags" bson:"tags"`
 	Meta  struct {
-		Date time.Time `json:"date" bson:"date"`
+		Date  time.Time `json:"date" bson:"date"`
+		Count int32     `json:"count" bson:"count"`
 	} `json:"meta" bson:"meta"`
 }
 
 func main() {
+	// parse uri by using connstring.Parse()
 	connectionString, err := connstring.Parse(uri)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// if database is not specified in connectionString
+	// set database name
 	dbname := connectionString.Database
 	if dbname == "" {
 		dbname = "new_database"
 	}
 
+	// connect to mongo
 	client, err := mongo.Connect(context.Background(), uri, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// set global database and collection values
 	db = client.Database(dbname, nil)
 	coll = db.Collection(collection)
 
@@ -61,14 +68,16 @@ func main() {
 	// Routes
 	e.GET("/", hello)
 	e.POST("/add-document", addDocument)
+	e.GET("/find", find)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
+// list all documents
 func hello(c echo.Context) error {
 	var doc Document
-	docs, err := doc.findAll()
+	docs, err := doc.FindAll()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
@@ -76,13 +85,48 @@ func hello(c echo.Context) error {
 	return c.JSON(http.StatusOK, docs)
 }
 
-func (doc Document) findAll() ([]Document, error) {
+// add one document
+func addDocument(c echo.Context) error {
+	doc := new(Document)
+	if err := c.Bind(doc); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+	doc.Meta.Date = time.Now()
+	doc.Meta.Count = int32(time.Now().Second())
+
+	if err := doc.InsertOne(); err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, doc)
+}
+
+// find multiple documents that matches params
+func find(c echo.Context) error {
+	title := c.QueryParam("title")
+	countString := c.QueryParam("count")
+
+	count, err := strconv.ParseInt(countString, 10, 32)
+	if err != nil {
+		count = 0
+	}
+
+	var doc Document
+	docs, err := doc.Find(title, int32(count))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, docs)
+}
+
+// FindAll ...
+func (doc Document) FindAll() ([]Document, error) {
 	var docs []Document
 
 	cursor, err := coll.Find(
 		context.Background(),
-		// bson.NewDocument(bson.EC.String("title", "New Title")),
-		nil,
+		bson.NewDocument(),
 	)
 	if err != nil {
 		return nil, err
@@ -98,7 +142,8 @@ func (doc Document) findAll() ([]Document, error) {
 	return docs, nil
 }
 
-func (doc Document) insertOne() error {
+// InsertOne ...
+func (doc Document) InsertOne() error {
 	if _, err := coll.InsertOne(
 		context.Background(),
 		bson.NewDocument(
@@ -110,6 +155,7 @@ func (doc Document) insertOne() error {
 			),
 			bson.EC.SubDocumentFromElements("meta",
 				bson.EC.Time("date", doc.Meta.Date),
+				bson.EC.Int32("count", doc.Meta.Count),
 			),
 		)); err != nil {
 		return err
@@ -118,16 +164,28 @@ func (doc Document) insertOne() error {
 	return nil
 }
 
-func addDocument(c echo.Context) error {
-	doc := new(Document)
-	if err := c.Bind(doc); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
-	}
-	doc.Meta.Date = time.Now()
+// Find ...
+func (doc Document) Find(title string, count int32) ([]Document, error) {
+	var docs []Document
 
-	if err := doc.insertOne(); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+	cursor, err := coll.Find(
+		context.Background(),
+		bson.NewDocument(
+			bson.EC.String("title", title),
+			bson.EC.SubDocumentFromElements("meta.count",
+				bson.EC.Int32("$gt", count),
+			)),
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return c.JSON(http.StatusOK, doc)
+	for cursor.Next(context.Background()) {
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
 }
