@@ -6,28 +6,95 @@ import (
 	"net/http"
 
 	"github.com/graphql-go/graphql"
-	uuid "github.com/satori/go.uuid"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // User ...
 type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+	ID   int    `json:"id"   gorm:"type:serial;primary key"`
+	Name string `json:"name" gorm:"type:varchar(100);not null"`
+	Age  int    `json:"age"  gorm:"not null"`
 }
 
-// Users ...
-var Users []User
+// Graphql ...
+type Graphql struct{}
 
-func uniqueID() string {
-	id, _ := uuid.NewV4()
-	return id.String()
+var graph Graphql
+
+func (Graphql) open() (*gorm.DB, error) {
+	db, err := gorm.Open("postgres", "host=localhost port=5432 user=root dbname=graphql password=pass sslmode=disable")
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func (Graphql) insert(u *User) error {
+	db, err := graph.open()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	db.Create(&User{Name: u.Name, Age: u.Age})
+	return nil
+}
+
+func (Graphql) find() ([]User, error) {
+	db, err := graph.open()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var users []User
+	db.Find(&users)
+
+	return users, nil
+}
+
+func (Graphql) findOne(id int) (User, error) {
+	user := User{}
+
+	db, err := graph.open()
+	if err != nil {
+		return user, err
+	}
+	defer db.Close()
+
+	db.First(&user, "id = ?", id)
+	return user, nil
+}
+
+func (Graphql) update(id, age int) (User, error) {
+	user := User{}
+
+	db, err := graph.open()
+	if err != nil {
+		return user, err
+	}
+	defer db.Close()
+
+	db.First(&user, "id = ?", id)
+	if user.ID == 0 {
+		return user, nil
+	}
+	user.Age = age
+	db.Save(&user)
+
+	return user, nil
 }
 
 func init() {
-	user1 := User{ID: "1", Name: "John", Age: 16}
-	user2 := User{ID: "2", Name: "Andrew", Age: 26}
-	Users = append(Users, user1, user2)
+	db, err := graph.open()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	// Migrate the schema
+	db.AutoMigrate(&User{})
 }
 
 // define custom GraphQL ObjectType `userType` for struct `User`
@@ -35,7 +102,7 @@ var userType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "User",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
-			Type: graphql.String,
+			Type: graphql.Int,
 		},
 		"name": &graphql.Field{
 			Type: graphql.String,
@@ -66,21 +133,13 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 				name, _ := params.Args["name"].(string)
 				age, _ := params.Args["age"].(int)
 
-				// generate new id
-				id := uniqueID()
-
-				newUser := User{
-					ID:   id,
-					Name: name,
-					Age:  age,
-				}
-
-				Users = append(Users, newUser)
+				newUser := User{Name: name, Age: age}
+				graph.insert(&newUser)
 
 				return newUser, nil
 			},
 		},
-		// http://localhost:8080/graphql?query=mutation+_{updateUser(id:"1",age:27){id,name,age}}
+		// http://localhost:8080/graphql?query=mutation+_{updateUser(id:1,age:27){id,name,age}}
 		"updateUser": &graphql.Field{
 			Type:        userType,
 			Description: "Update an existing user's age",
@@ -89,20 +148,16 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					Type: graphql.Int,
 				},
 				"id": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.String),
+					Type: graphql.NewNonNull(graphql.Int),
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				age, _ := params.Args["age"].(int)
-				id, _ := params.Args["id"].(string)
-				user := User{}
+				id, _ := params.Args["id"].(int)
 
-				for i := 0; i < len(Users); i++ {
-					if Users[i].ID == id {
-						Users[i].Age = age
-						user = Users[i]
-						break
-					}
+				user, _ := graph.update(id, age)
+				if user.ID == 0 {
+					return nil, nil
 				}
 				return user, nil
 			},
@@ -114,26 +169,26 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 var Query = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Query",
 	Fields: graphql.Fields{
-		// http://localhost:8080/graphql?query={user(id:"1"){id,name,age}}
+		// http://localhost:8080/graphql?query={user(id:1){id,name,age}}
 		"user": &graphql.Field{
 			Type:        userType,
 			Description: "Get a user",
 			Args: graphql.FieldConfigArgument{
 				"id": &graphql.ArgumentConfig{
-					Type: graphql.String,
+					Type: graphql.Int,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				id, ok := params.Args["id"].(string)
-				if ok {
-					for _, user := range Users {
-						if user.ID == id {
-							return user, nil
-						}
-					}
-				}
+				id, ok := params.Args["id"].(int)
 
-				return User{}, nil
+				var user User
+				if ok {
+					user, _ = graph.findOne(id)
+				}
+				if user.ID == 0 {
+					return nil, nil
+				}
+				return user, nil
 			},
 		},
 		// http://localhost:8080/graphql?query={userList{id,name,age}}
@@ -141,7 +196,8 @@ var Query = graphql.NewObject(graphql.ObjectConfig{
 			Type:        graphql.NewList(userType),
 			Description: "List of users",
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				return Users, nil
+				users, _ := graph.find()
+				return users, nil
 			},
 		},
 	},
