@@ -1,0 +1,20 @@
+version: '3'
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    network_mode: host
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    network_mode: host
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+volumes:
+  grafana-storage:
+ 
